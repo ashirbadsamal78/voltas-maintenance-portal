@@ -4,9 +4,258 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VOLTAS Maintenance System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f6f8;
+      color: #222;
+    }
+    header {
+      background: #0f172a;
+      color: white;
+      padding: 18px;
+      text-align: center;
+    }
+    nav {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      background: #1e293b;
+      padding: 10px;
+      flex-wrap: wrap;
+    }
+    nav button {
+      background: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 16px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    button.primary {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    table, th, td {
+      border: 1px solid #d1d5db;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+  <header>
+    <h1>VOLTAS Maintenance System</h1>
+    <p>VOLTAS / TSK</p>
+  </header>
+
+  <nav>
+    <button onclick="showPage('dashboard')">Dashboard</button>
+    <button onclick="showPage('entry')">Maintenance Entry</button>
+    <button onclick="showPage('reports')">Reports</button>
+    <button onclick="showPage('pm')">PM Schedule</button>
+    <button onclick="showPage('contact')">Contact</button>
+  </nav>
+
+  <div class="container">
+    <div id="dashboard" class="card">
+      <h2>Dashboard</h2>
+      <p><strong>Total Reports:</strong> <span id="totalReports">0</span></p>
+      <p><strong>PM Items:</strong> <span id="totalPm">0</span></p>
+    </div>
+
+    <div id="entry" class="card hidden">
+      <h2>Maintenance Entry</h2>
+      <input id="empId" placeholder="Employee ID" />
+      <input id="name" placeholder="Employee Name" />
+      <input id="department" placeholder="Department" />
+      <select id="shift">
+        <option value="">Select Shift</option>
+        <option>A Shift</option>
+        <option>B Shift</option>
+        <option>C Shift</option>
+        <option>General Shift</option>
+      </select>
+      <input id="equipment" placeholder="Equipment" />
+      <input id="date" type="date" />
+      <textarea id="details" placeholder="Maintenance Details"></textarea>
+      <button class="primary" onclick="saveReport()">Save Report</button>
+    </div>
+
+    <div id="reports" class="card hidden">
+      <h2>Reports</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Emp ID</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Shift</th>
+            <th>Equipment</th>
+            <th>Date</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="reportTable"></tbody>
+      </table>
+    </div>
+
+    <div id="pm" class="card hidden">
+      <h2>Preventive Maintenance Schedule</h2>
+      <input id="pmEquipment" placeholder="Equipment Name" />
+      <select id="pmFrequency">
+        <option value="">Select Frequency</option>
+        <option>Daily</option>
+        <option>Weekly</option>
+        <option>Monthly</option>
+        <option>Quarterly</option>
+        <option>Yearly</option>
+      </select>
+      <input id="pmLastDate" type="date" />
+      <input id="pmNextDate" type="date" />
+      <input id="pmResponsible" placeholder="Responsible Person" />
+      <button class="primary" onclick="savePM()">Save PM Schedule</button>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Equipment</th>
+            <th>Frequency</th>
+            <th>Last Date</th>
+            <th>Next Date</th>
+            <th>Responsible</th>
+          </tr>
+        </thead>
+        <tbody id="pmTable"></tbody>
+      </table>
+    </div>
+
+    <div id="contact" class="card hidden">
+      <h2>Contact</h2>
+      <p><strong>Admin Email:</strong> ashirbad.samal@outlook.com</p>
+      <p>Mobile access: Enabled</p>
+    </div>
+  </div>
+
+  <script>
+    let reports = JSON.parse(localStorage.getItem("reports") || "[]");
+    let pmList = JSON.parse(localStorage.getItem("pmList") || "[]");
+
+    function showPage(pageId) {
+      ["dashboard","entry","reports","pm","contact"].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+      });
+      document.getElementById(pageId).classList.remove("hidden");
+      renderTables();
+    }
+
+    function saveReport() {
+      const report = {
+        empId: document.getElementById("empId").value,
+        name: document.getElementById("name").value,
+        department: document.getElementById("department").value,
+        shift: document.getElementById("shift").value,
+        equipment: document.getElementById("equipment").value,
+        date: document.getElementById("date").value,
+        details: document.getElementById("details").value
+      };
+
+      if (!report.empId || !report.name || !report.equipment || !report.date) {
+        alert("Please fill required fields");
+        return;
+      }
+
+      reports.push(report);
+      localStorage.setItem("reports", JSON.stringify(reports));
+      alert("Report saved successfully");
+      renderTables();
+    }
+
+    function savePM() {
+      const pm = {
+        equipment: document.getElementById("pmEquipment").value,
+        frequency: document.getElementById("pmFrequency").value,
+        lastDate: document.getElementById("pmLastDate").value,
+        nextDate: document.getElementById("pmNextDate").value,
+        responsible: document.getElementById("pmResponsible").value
+      };
+
+      if (!pm.equipment || !pm.nextDate) {
+        alert("Please fill PM required fields");
+        return;
+      }
+
+      pmList.push(pm);
+      localStorage.setItem("pmList", JSON.stringify(pmList));
+      alert("PM schedule saved");
+      renderTables();
+    }
+
+    function renderTables() {
+      document.getElementById("totalReports").textContent = reports.length;
+      document.getElementById("totalPm").textContent = pmList.length;
+
+      const reportTable = document.getElementById("reportTable");
+      reportTable.innerHTML = reports.map(r => `
+        <tr>
+          <td>${r.empId}</td>
+          <td>${r.name}</td>
+          <td>${r.department}</td>
+          <td>${r.shift}</td>
+          <td>${r.equipment}</td>
+          <td>${r.date}</td>
+          <td>${r.details}</td>
+        </tr>
+      `).join("");
+
+      const pmTable = document.getElementById("pmTable");
+      pmTable.innerHTML = pmList.map(p => `
+        <tr>
+          <td>${p.equipment}</td>
+          <td>${p.frequency}</td>
+          <td>${p.lastDate}</td>
+          <td>${p.nextDate}</td>
+          <td>${p.responsible}</td>
+        </tr>
+      `).join("");
+    }
+
+    renderTables();
+  </script>
 </body>
 </html>
