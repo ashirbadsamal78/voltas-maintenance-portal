@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOLTAS Maintenance System</title>
+  <style>
+    :root{
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --primary:#1d4ed8;
+      --primary-dark:#0f172a;
+      --nav:#1e293b;
+      --border:#d1d5db;
+      --muted:#64748b;
+      --danger:#dc2626;
+      --success:#059669;
+      --warning:#d97706;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#1f2937}
+    header{background:var(--primary-dark);color:#fff;padding:20px;text-align:center}
+    nav{display:flex;gap:10px;justify-content:center;background:var(--nav);padding:10px;flex-wrap:wrap}
+    nav button,.btn{padding:10px 14px;border:none;border-radius:6px;cursor:pointer;font-weight:600}
+    nav button{background:#fff}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-danger{background:var(--danger);color:#fff}
+    .btn-success{background:var(--success);color:#fff}
+    .btn-secondary{background:#e5e7eb;color:#111827}
+    .btn-warning{background:var(--warning);color:#fff}
+    .container{max-width:1200px;margin:20px auto;padding:12px}
+    .card{background:var(--card);padding:16px;border-radius:10px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
+    .hidden{display:none}
+    input,textarea,select{width:100%;padding:10px;margin:6px 0 12px;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;font:inherit}
+    textarea{min-height:90px;resize:vertical}
+    table{width:100%;border-collapse:collapse;margin-top:12px;background:white}
+    td,th{border:1px solid var(--border);padding:8px;text-align:left;vertical-align:top;font-size:14px}
+    th{background:#eef4ff}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .stat{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px}
+    .stat .label{color:var(--muted);font-size:13px}
+    .stat .value{font-size:26px;font-weight:700;margin-top:6px}
+    .small{font-size:13px;color:var(--muted)}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .toolbar>div{flex:1 1 260px}
+    .nowrap{white-space:nowrap}
+    .login-wrap{max-width:420px;margin:40px auto;padding:16px}
+    .chart-box{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .bar-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+    .bar-row{display:grid;grid-template-columns:140px 1fr 50px;gap:10px;align-items:center}
+    .bar-track{background:#e5e7eb;border-radius:999px;overflow:hidden;height:18px}
+    .bar-fill{background:var(--primary);height:100%}
+    .status-box{border:1px dashed #94a3b8;border-radius:8px;padding:10px;background:#f8fafc}
+    @media (max-width: 900px){
+      .row,.stats-grid,.chart-box{grid-template-columns:1fr}
+      .bar-row{grid-template-columns:100px 1fr 40px}
+    }
+  </style>
+</head>
+<body>
+  <div id="loginView" class="login-wrap">
+    <div class="card">
+      <h2>VOLTAS Maintenance Login</h2>
+      <div class="small">Default admin login: <b>admin</b> / <b>1234</b></div>
+      <input id="loginUsername" placeholder="Username" />
+      <input id="loginPassword" type="password" placeholder="Password" />
+      <button class="btn btn-primary" onclick="login()">Login</button>
+    </div>
+  </div>
+
+  <div id="appView" class="hidden">
+    <header>
+      <h1>VOLTAS Maintenance System</h1>
+      <div>VOLTAS / TSK</div>
+      <div id="userInfo" style="margin-top:8px;"></div>
+    </header>
+
+    <nav>
+      <button onclick="showPage('dashboard')">Dashboard</button>
+      <button onclick="showPage('entry')">Entry</button>
+      <button onclick="showPage('pm')">PM</button>
+      <button onclick="showPage('reports')">Reports</button>
+      <button onclick="showPage('users')">Users</button>
+      <button onclick="showPage('cloud')">Cloud</button>
+      <button onclick="logout()">Logout</button>
+    </nav>
+
+    <div class="container">
+      <section id="dashboard" class="card">
+        <h3>Dashboard</h3>
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="label">Total Reports</div>
+            <div id="totalReports" class="value">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Total PM Items</div>
+            <div id="totalPm" class="value">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Total Users</div>
+            <div id="totalUsers" class="value">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">Latest Report No</div>
+            <div id="latestReportNo" class="value">-</div>
+          </div>
+        </div>
+
+        <div class="chart-box" style="margin-top:16px;">
+          <div class="card" style="margin:0;">
+            <h4 style="margin-top:0;">Reports by Department</h4>
+            <div id="deptChart" class="bar-list"></div>
+          </div>
+          <div class="card" style="margin:0;">
+            <h4 style="margin-top:0;">Reports by Equipment</h4>
+            <div id="equipChart" class="bar-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="entry" class="card hidden">
+        <h3>Maintenance Entry</h3>
+        <div class="row">
+          <div>
+            <label>Employee ID</label>
+            <input id="empId" placeholder="Emp ID" />
+          </div>
+          <div>
+            <label>Name</label>
+            <input id="empName" placeholder="Employee Name" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Department</label>
+            <input id="department" placeholder="Department" />
+          </div>
+          <div>
+            <label>Equipment</label>
+            <input id="equipment" placeholder="Equipment" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Date</label>
+            <input id="reportDate" type="date" />
+          </div>
+          <div>
+            <label>Photo Upload</label>
+            <input id="photoUpload" type="file" accept="image/*" />
+          </div>
+        </div>
+        <label>Details</label>
+        <textarea id="details" placeholder="Maintenance details"></textarea>
+        <div class="toolbar">
+          <div class="small">Required: Emp ID, Name, Department, Equipment, Date</div>
+          <div class="nowrap">
+            <button class="btn btn-secondary" onclick="clearReportForm()">Clear</button>
+            <button class="btn btn-primary" onclick="saveReport()">Save Report</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="pm" class="card hidden">
+        <h3>Preventive Maintenance Schedule</h3>
+        <div class="row">
+          <div>
+            <label>Equipment</label>
+            <input id="pmEquipment" placeholder="Equipment" />
+          </div>
+          <div>
+            <label>Next Date</label>
+            <input id="pmNextDate" type="date" />
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="small">Required: Equipment and Next Date</div>
+          <div class="nowrap">
+            <button class="btn btn-secondary" onclick="clearPmForm()">Clear</button>
+            <button class="btn btn-primary" onclick="savePm()">Save PM</button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Equipment</th>
+              <th>Next Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="pmTable"></tbody>
+        </table>
+      </section>
+
+      <section id="reports" class="card hidden">
+        <div class="toolbar">
+          <div>
+            <h3 style="margin:0 0 8px 0;">Reports</h3>
+            <input id="searchInput" placeholder="Search by report no, emp id, name, department, equipment..." oninput="renderTables()" />
+          </div>
+          <div class="nowrap" style="text-align:right;">
+            <button class="btn btn-primary" onclick="downloadReports()">Download CSV</button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Emp ID</th>
+              <th>Name</th>
+              <th>Department</th>
+              <th>Equipment</th>
+              <th>Date</th>
+              <th>Details</th>
+              <th>Photo</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="reportTable"></tbody>
+        </table>
+      </section>
+
+      <section id="users" class="card hidden">
+        <h3>User Management</h3>
+        <div class="row">
+          <div>
+            <label>Username</label>
+            <input id="newUser" placeholder="Username" />
+          </div>
+          <div>
+            <label>Password</label>
+            <input id="newPass" type="password" placeholder="Password" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Role</label>
+            <select id="newRole">
+              <option value="Worker">Worker</option>
+              <option value="Supervisor">Supervisor</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div class="small" style="padding-top:30px;">Admin can add users. Stored in browser local data.</div>
+        </div>
+        <button class="btn btn-success" onclick="addUser()">Add User</button>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="userTable"></tbody>
+        </table>
+      </section>
+
+      <section id="cloud" class="card hidden">
+        <h3>Cloud Backup / Restore</h3>
+        <div class="status-box">
+          <b>Status:</b> Ready for cloud-style backup using file export/import.<br>
+          <span class="small">This version works without Firebase keys. You can export all data to JSON and restore it anytime. If you later want real Firebase, add keys and I can wire them in.</span>
+        </div>
+
+        <div class="toolbar" style="margin-top:12px;">
+          <div>
+            <button class="btn btn-primary" onclick="exportBackup()">Export Full Backup</button>
+          </div>
+          <div>
+            <input id="backupFile" type="file" accept=".json,application/json" />
+            <button class="btn btn-warning" onclick="importBackup()">Import Backup</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    let reports = JSON.parse(localStorage.getItem("reports") || "[]");
+    if (!Array.isArray(reports)) reports = [];
+
+    let pmList = JSON.parse(localStorage.getItem("pm") || "[]");
+    if (!Array.isArray(pmList)) pmList = [];
+
+    let users = JSON.parse(localStorage.getItem("users") || '[]');
+    if (!Array.isArray(users)) users = [];
+    if (!users.some(u => u.u === "admin")) {
+      users.push({u:"admin", p:"1234", role:"Admin"});
+      localStorage.setItem("users", JSON.stringify(users));
+    }
+
+    let counter = Number(localStorage.getItem("counter") || "0");
+    if (!Number.isFinite(counter)) counter = 0;
+
+    function persist() {
+      localStorage.setItem("reports", JSON.stringify(reports));
+      localStorage.setItem("pm", JSON.stringify(pmList));
+      localStorage.setItem("users", JSON.stringify(users));
+      localStorage.setItem("counter", String(counter));
+    }
+
+    function login() {
+      const u = document.getElementById("loginUsername").value.trim();
+      const p = document.getElementById("loginPassword").value.trim();
+      const found = users.find(x => x.u === u && x.p === p);
+
+      if (found) {
+        localStorage.setItem("session", JSON.stringify({u: found.u, role: found.role}));
+        renderApp();
+      } else {
+        alert("Wrong login");
+      }
+    }
+
+    function renderApp() {
+      const session = JSON.parse(localStorage.getItem("session") || "null");
+      if (!session) {
+        document.getElementById("loginView").style.display = "block";
+        document.getElementById("appView").classList.add("hidden");
+        return;
+      }
+
+      document.getElementById("loginView").style.display = "none";
+      document.getElementById("appView").classList.remove("hidden");
+      document.getElementById("userInfo").innerText = "Logged in: " + session.u + " (" + session.role + ")";
+      renderTables();
+      showPage("dashboard");
+    }
+
+    function currentSession() {
+      return JSON.parse(localStorage.getItem("session") || "null");
+    }
+
+    function isAdmin() {
+      const s = currentSession();
+      return !!s && s.role === "Admin";
+    }
+
+    function logout() {
+      localStorage.removeItem("session");
+      location.reload();
+    }
+
+    function showPage(pageId) {
+      ["dashboard","entry","pm","reports","users","cloud"].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+      });
+      document.getElementById(pageId).classList.remove("hidden");
+    }
+
+    function clearReportForm() {
+      document.getElementById("empId").value = "";
+      document.getElementById("empName").value = "";
+      document.getElementById("department").value = "";
+      document.getElementById("equipment").value = "";
+      document.getElementById("reportDate").value = "";
+      document.getElementById("details").value = "";
+      document.getElementById("photoUpload").value = "";
+    }
+
+    function clearPmForm() {
+      document.getElementById("pmEquipment").value = "";
+      document.getElementById("pmNextDate").value = "";
+    }
+
+    function saveReport() {
+      const empId = document.getElementById("empId").value.trim();
+      const name = document.getElementById("empName").value.trim();
+      const department = document.getElementById("department").value.trim();
+      const equipment = document.getElementById("equipment").value.trim();
+      const date = document.getElementById("reportDate").value;
+      const details = document.getElementById("details").value.trim();
+      const photoFile = document.getElementById("photoUpload").files[0];
+
+      if (!empId || !name || !department || !equipment || !date) {
+        alert("Please fill all required fields");
+        return;
+      }
+
+      counter += 1;
+      reports.push({
+        no: "TSK-" + String(counter).padStart(4, "0"),
+        empId, name, department, equipment, date, details,
+        photo: photoFile ? photoFile.name : ""
+      });
+
+      persist();
+      clearReportForm();
+      renderTables();
+      showPage("reports");
+      alert("Report saved successfully");
+    }
+
+    function savePm() {
+      const equip = document.getElementById("pmEquipment").value.trim();
+      const date = document.getElementById("pmNextDate").value;
+      if (!equip || !date) {
+        alert("Please fill PM fields");
+        return;
+      }
+      pmList.push({ equip, date });
+      persist();
+      clearPmForm();
+      renderTables();
+      alert("PM saved successfully");
+    }
+
+    function deleteReport(index) {
+      if (!confirm("Delete this report?")) return;
+      reports.splice(index, 1);
+      persist();
+      renderTables();
+    }
+
+    function deletePm(index) {
+      if (!confirm("Delete this PM item?")) return;
+      pmList.splice(index, 1);
+      persist();
+      renderTables();
+    }
+
+    function addUser() {
+      if (!isAdmin()) {
+        alert("Only admin can add users");
+        return;
+      }
+      const u = document.getElementById("newUser").value.trim();
+      const p = document.getElementById("newPass").value.trim();
+      const role = document.getElementById("newRole").value;
+
+      if (!u || !p) {
+        alert("Enter username and password");
+        return;
+      }
+      if (users.some(x => x.u === u)) {
+        alert("Username already exists");
+        return;
+      }
+
+      users.push({u, p, role});
+      persist();
+      document.getElementById("newUser").value = "";
+      document.getElementById("newPass").value = "";
+      document.getElementById("newRole").value = "Worker";
+      renderTables();
+      alert("User added successfully");
+    }
+
+    function deleteUser(index) {
+      if (!isAdmin()) {
+        alert("Only admin can delete users");
+        return;
+      }
+      if (users[index] && users[index].u === "admin") {
+        alert("Default admin cannot be deleted");
+        return;
+      }
+      if (!confirm("Delete this user?")) return;
+      users.splice(index, 1);
+      persist();
+      renderTables();
+    }
+
+    function countBy(items, keyName) {
+      const out = {};
+      items.forEach(item => {
+        const key = (item[keyName] || "Unknown").trim() || "Unknown";
+        out[key] = (out[key] || 0) + 1;
+      });
+      return out;
+    }
+
+    function makeBarChart(targetId, dataMap) {
+      const target = document.getElementById(targetId);
+      const entries = Object.entries(dataMap);
+      if (!entries.length) {
+        target.innerHTML = '<div class="small">No data available</div>';
+        return;
+      }
+      const max = Math.max(...entries.map(x => x[1]), 1);
+      target.innerHTML = entries.map(([label, value]) => `
+        <div class="bar-row">
+          <div>${escapeHtml(label)}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(value/max)*100}%"></div></div>
+          <div>${value}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderTables() {
+      document.getElementById("totalReports").innerText = reports.length;
+      document.getElementById("totalPm").innerText = pmList.length;
+      document.getElementById("totalUsers").innerText = users.length;
+      document.getElementById("latestReportNo").innerText = reports.length ? reports[reports.length - 1].no : "-";
+
+      const key = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
+      const filteredReports = reports.filter(r =>
+        [r.no, r.empId, r.name, r.department, r.equipment, r.date, r.details, r.photo]
+          .join(" ")
+          .toLowerCase()
+          .includes(key)
+      );
+
+      document.getElementById("reportTable").innerHTML = filteredReports.map(r => {
+        const actualIndex = reports.findIndex(item => item.no === r.no);
+        return `
+          <tr>
+            <td>${escapeHtml(r.no)}</td>
+            <td>${escapeHtml(r.empId)}</td>
+            <td>${escapeHtml(r.name)}</td>
+            <td>${escapeHtml(r.department)}</td>
+            <td>${escapeHtml(r.equipment)}</td>
+            <td>${escapeHtml(r.date)}</td>
+            <td>${escapeHtml(r.details)}</td>
+            <td>${escapeHtml(r.photo)}</td>
+            <td><button class="btn btn-danger" onclick="deleteReport(${actualIndex})">Delete</button></td>
+          </tr>
+        `;
+      }).join("");
+
+      document.getElementById("pmTable").innerHTML = pmList.map((p, index) => `
+        <tr>
+          <td>${escapeHtml(p.equip)}</td>
+          <td>${escapeHtml(p.date)}</td>
+          <td><button class="btn btn-danger" onclick="deletePm(${index})">Delete</button></td>
+        </tr>
+      `).join("");
+
+      document.getElementById("userTable").innerHTML = users.map((u, index) => `
+        <tr>
+          <td>${escapeHtml(u.u)}</td>
+          <td>${escapeHtml(u.role || "Worker")}</td>
+          <td><button class="btn btn-danger" onclick="deleteUser(${index})">Delete</button></td>
+        </tr>
+      `).join("");
+
+      makeBarChart("deptChart", countBy(reports, "department"));
+      makeBarChart("equipChart", countBy(reports, "equipment"));
+    }
+
+    function downloadReports() {
+      if (!reports.length) {
+        alert("No reports to download");
+        return;
+      }
+      const headers = ["No","Emp ID","Name","Department","Equipment","Date","Details","Photo"];
+      const rows = reports.map(r => [r.no,r.empId,r.name,r.department,r.equipment,r.date,r.details,r.photo]);
+      const csv = [headers, ...rows]
+        .map(row => row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "voltas_reports.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportBackup() {
+      const backup = {
+        reports,
+        pmList,
+        users,
+        counter,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "voltas_backup.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackup() {
+      const file = document.getElementById("backupFile").files[0];
+      if (!file) {
+        alert("Choose a backup file");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function() {
+        try {
+          const data = JSON.parse(reader.result);
+          reports = Array.isArray(data.reports) ? data.reports : [];
+          pmList = Array.isArray(data.pmList) ? data.pmList : [];
+          users = Array.isArray(data.users) ? data.users : users;
+          if (!users.some(u => u.u === "admin")) users.push({u:"admin", p:"1234", role:"Admin"});
+          counter = Number(data.counter || reports.length || 0);
+          persist();
+          renderTables();
+          alert("Backup imported successfully");
+        } catch (e) {
+          alert("Invalid backup file");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    renderApp();
+  </script>
+</body>
+</html>
