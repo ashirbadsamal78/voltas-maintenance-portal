@@ -1,0 +1,202 @@
+1<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOLTAS Maintenance System</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#f3f6fb}
+header{background:#0f172a;color:#fff;padding:20px;text-align:center}
+nav{display:flex;gap:10px;justify-content:center;background:#1e293b;padding:10px}
+nav button{padding:10px;border-radius:6px;border:none;cursor:pointer}
+.container{max-width:1000px;margin:20px auto;padding:10px}
+.card{background:#fff;padding:15px;border-radius:10px;margin-bottom:15px}
+.hidden{display:none}
+input,textarea,select{width:100%;padding:8px;margin:6px 0}
+table{width:100%;border-collapse:collapse}
+td,th{border:1px solid #ccc;padding:8px}
+</style>
+</head>
+
+<body>
+
+<div id="loginView">
+<div class="card">
+<h2>Login</h2>
+<input id="loginUsername" placeholder="Username">
+<input id="loginPassword" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div>
+</div>
+
+<div id="appView" class="hidden">
+
+<header>
+<h1>VOLTAS Maintenance System</h1>
+<div id="userInfo"></div>
+</header>
+
+<nav>
+<button onclick="showPage('dashboard')">Dashboard</button>
+<button onclick="showPage('entry')">Entry</button>
+<button onclick="showPage('pm')">PM</button>
+<button onclick="showPage('reports')">Reports</button>
+<button onclick="logout()">Logout</button>
+</nav>
+
+<div class="container">
+
+<div id="dashboard" class="card">
+<h3>Dashboard</h3>
+Reports: <span id="totalReports">0</span><br>
+PM: <span id="totalPm">0</span>
+</div>
+
+<div id="entry" class="card hidden">
+<h3>Maintenance Entry</h3>
+<input id="empId" placeholder="Emp ID">
+<input id="empName" placeholder="Name">
+<input id="department" placeholder="Dept">
+<input id="equipment" placeholder="Equipment">
+<input id="reportDate" type="date">
+<textarea id="details" placeholder="Details"></textarea>
+<input id="photoUpload" type="file">
+<button onclick="saveReport()">Save</button>
+</div>
+
+<div id="pm" class="card hidden">
+<h3>PM Schedule</h3>
+<input id="pmEquipment" placeholder="Equipment">
+<input id="pmNextDate" type="date">
+<button onclick="savePm()">Save PM</button>
+
+<table>
+<thead><tr><th>Equipment</th><th>Next</th></tr></thead>
+<tbody id="pmTable"></tbody>
+</table>
+</div>
+
+<div id="reports" class="card hidden">
+<h3>Reports</h3>
+<input id="searchInput" placeholder="Search..." oninput="renderTables()">
+<button onclick="downloadReports()">Download</button>
+
+<table>
+<thead>
+<tr>
+<th>No</th><th>Emp</th><th>Name</th><th>Equipment</th><th>Date</th><th>Photo</th>
+</tr>
+</thead>
+<tbody id="reportTable"></tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+<script>
+
+let reports = JSON.parse(localStorage.getItem("reports")||"[]");
+let pmList = JSON.parse(localStorage.getItem("pm")||"[]");
+let counter = Number(localStorage.getItem("counter")||"0");
+
+function login(){
+let u=document.getElementById("loginUsername").value;
+let p=document.getElementById("loginPassword").value;
+
+if(u==="admin" && p==="1234"){
+localStorage.setItem("session","admin");
+renderApp();
+}else{
+alert("Wrong login");
+}
+}
+
+function renderApp(){
+let s=localStorage.getItem("session");
+if(!s){
+loginView.style.display="block";
+appView.classList.add("hidden");
+return;
+}
+loginView.style.display="none";
+appView.classList.remove("hidden");
+userInfo.innerText="Logged in as admin";
+showPage("dashboard");
+renderTables();
+}
+
+function logout(){
+localStorage.removeItem("session");
+location.reload();
+}
+
+function showPage(p){
+["dashboard","entry","pm","reports"].forEach(id=>{
+document.getElementById(id).classList.add("hidden");
+});
+document.getElementById(p).classList.remove("hidden");
+}
+
+function saveReport(){
+counter++;
+let r={
+no:"TSK-"+counter,
+emp:empId.value,
+name:empName.value,
+equip:equipment.value,
+date:reportDate.value,
+photo:photoUpload.files[0]?.name||""
+};
+reports.push(r);
+localStorage.setItem("reports",JSON.stringify(reports));
+localStorage.setItem("counter",counter);
+alert("Saved");
+renderTables();
+}
+
+function savePm(){
+pmList.push({equip:pmEquipment.value,date:pmNextDate.value});
+localStorage.setItem("pm",JSON.stringify(pmList));
+renderTables();
+}
+
+function renderTables(){
+totalReports.innerText=reports.length;
+totalPm.innerText=pmList.length;
+
+let key=searchInput?.value?.toLowerCase()||"";
+
+reportTable.innerHTML=reports.filter(r=>
+JSON.stringify(r).toLowerCase().includes(key)
+).map(r=>`
+<tr>
+<td>${r.no}</td>
+<td>${r.emp}</td>
+<td>${r.name}</td>
+<td>${r.equip}</td>
+<td>${r.date}</td>
+<td>${r.photo}</td>
+</tr>
+`).join("");
+
+pmTable.innerHTML=pmList.map(p=>`
+<tr>
+<td>${p.equip}</td>
+<td>${p.date}</td>
+</tr>
+`).join("");
+}
+
+function downloadReports(){
+let csv=reports.map(r=>Object.values(r).join(",")).join("\n");
+let a=document.createElement("a");
+a.href="data:text/csv,"+csv;
+a.download="report.csv";
+a.click();
+}
+
+renderApp();
+
+</
