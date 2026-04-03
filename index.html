@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOLTAS Maintenance System - All In One</title>
+  <style>
+    :root{
+      --bg:#f3f6fb; --card:#ffffff; --primary:#1d4ed8; --primary-dark:#0f172a;
+      --nav:#1e293b; --border:#d1d5db; --muted:#64748b; --danger:#dc2626;
+      --success:#059669; --warning:#d97706;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#1f2937;overflow-x:hidden}
+    body::before{
+      content:"VOLTAS • VOLTAS • VOLTAS • VOLTAS";
+      position:fixed;top:45%;left:50%;transform:translate(-50%,-50%) rotate(-28deg);
+      font-size:64px;font-weight:700;color:rgba(29,78,216,.06);pointer-events:none;white-space:nowrap;z-index:0;letter-spacing:6px
+    }
+    body::after{
+      content:"TSK";position:fixed;bottom:20px;right:24px;
+      font-size:80px;font-weight:700;color:rgba(15,23,42,.05);pointer-events:none;z-index:0
+    }
+    header{
+      position:relative;z-index:1;background:linear-gradient(135deg,var(--primary-dark),#1e3a8a);
+      color:#fff;padding:20px;text-align:center;animation:fadeDown .7s ease
+    }
+    nav{
+      position:relative;z-index:1;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+      background:var(--nav);padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.15)
+    }
+    nav button,.btn{
+      padding:10px 14px;border:none;border-radius:8px;cursor:pointer;font-weight:600;
+      transition:transform .2s ease, box-shadow .2s ease
+    }
+    nav button:hover,.btn:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.12)}
+    nav button{background:#fff}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-danger{background:var(--danger);color:#fff}
+    .btn-success{background:var(--success);color:#fff}
+    .btn-secondary{background:#e5e7eb;color:#111827}
+    .btn-warning{background:var(--warning);color:#fff}
+    .container{position:relative;z-index:1;max-width:1200px;margin:20px auto;padding:12px}
+    .card{
+      background:rgba(255,255,255,.94);backdrop-filter:blur(2px);padding:16px;border-radius:14px;
+      margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.08);border:1px solid rgba(255,255,255,.8);
+      animation:fadeUp .5s ease
+    }
+    .hidden{display:none}
+    input,textarea,select{
+      width:100%;padding:10px;margin:6px 0 12px;box-sizing:border-box;border:1px solid var(--border);
+      border-radius:8px;font:inherit;background:#fff
+    }
+    input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(29,78,216,.12)}
+    textarea{min-height:90px;resize:vertical}
+    table{width:100%;border-collapse:collapse;margin-top:12px;background:white;overflow:hidden;border-radius:10px}
+    td,th{border:1px solid var(--border);padding:8px;text-align:left;vertical-align:top;font-size:14px}
+    th{background:#eef4ff}
+    tbody tr:hover{background:#f8fbff}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .stat{background:linear-gradient(180deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:14px;padding:14px;animation:popIn .45s ease}
+    .stat .label{color:var(--muted);font-size:13px}
+    .stat .value{font-size:26px;font-weight:700;margin-top:6px}
+    .small{font-size:13px;color:var(--muted)}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .toolbar>div{flex:1 1 260px}
+    .nowrap{white-space:nowrap}
+    .login-wrap{position:relative;z-index:1;max-width:420px;margin:40px auto;padding:16px}
+    .chart-box{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .bar-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+    .bar-row{display:grid;grid-template-columns:140px 1fr 50px;gap:10px;align-items:center}
+    .bar-track{background:#e5e7eb;border-radius:999px;overflow:hidden;height:18px}
+    .bar-fill{background:linear-gradient(90deg,var(--primary),#60a5fa);height:100%;animation:growBar 1s ease}
+    .status-box{border:1px dashed #94a3b8;border-radius:8px;padding:10px;background:#f8fafc}
+    .logo-badge{
+      display:inline-block;margin-top:8px;padding:4px 10px;border:1px solid rgba(255,255,255,.25);
+      border-radius:999px;background:rgba(255,255,255,.08);font-size:12px;letter-spacing:1px
+    }
+    .otp-note{background:#fff7ed;border:1px solid #fdba74;padding:10px;border-radius:8px;color:#9a3412;font-size:13px}
+    @keyframes fadeDown{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes popIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+    @keyframes growBar{from{width:0}}
+    @media (max-width:900px){
+      .row,.stats-grid,.chart-box{grid-template-columns:1fr}
+      .bar-row{grid-template-columns:100px 1fr 40px}
+      body::before{font-size:42px}
+      body::after{font-size:52px}
+    }
+  </style>
+</head>
+<body>
+  <div id="loginView" class="login-wrap">
+    <div class="card">
+      <h2>VOLTAS Maintenance Login</h2>
+      <div class="small">Default admin login: <b>admin</b> / <b>1234</b></div>
+      <input id="loginUsername" placeholder="Username" />
+      <input id="loginPassword" type="password" placeholder="Password" />
+      <button class="btn btn-primary" onclick="login()">Login</button>
+    </div>
+  </div>
+
+  <div id="appView" class="hidden">
+    <header>
+      <h1>VOLTAS Maintenance System</h1>
+      <div>VOLTAS / TSK</div>
+      <div class="logo-badge">VOLTAS SECURED PORTAL</div>
+      <div id="userInfo" style="margin-top:8px;"></div>
+    </header>
+
+    <nav>
+      <button onclick="showPage('dashboard')">Dashboard</button>
+      <button onclick="showPage('entry')">Entry</button>
+      <button onclick="showPage('pm')">PM</button>
+      <button onclick="showPage('reports')">Reports</button>
+      <button id="usersNav" onclick="showPage('users')">Users</button>
+      <button id="cloudNav" onclick="showPage('cloud')">Cloud</button>
+      <button onclick="showPage('passwords')">Password Reset</button>
+      <button onclick="logout()">Logout</button>
+    </nav>
+
+    <div class="container">
+      <section id="dashboard" class="card">
+        <h3>Dashboard</h3>
+        <div class="stats-grid">
+          <div class="stat"><div class="label">Total Reports</div><div id="totalReports" class="value">0</div></div>
+          <div class="stat"><div class="label">Total PM Items</div><div id="totalPm" class="value">0</div></div>
+          <div class="stat"><div class="label">Total Users</div><div id="totalUsers" class="value">0</div></div>
+          <div class="stat"><div class="label">Latest Report No</div><div id="latestReportNo" class="value">-</div></div>
+        </div>
+        <div class="chart-box" style="margin-top:16px;">
+          <div class="card" style="margin:0;"><h4 style="margin-top:0;">Reports by Department</h4><div id="deptChart" class="bar-list"></div></div>
+          <div class="card" style="margin:0;"><h4 style="margin-top:0;">Reports by Equipment</h4><div id="equipChart" class="bar-list"></div></div>
+        </div>
+      </section>
+
+      <section id="entry" class="card hidden">
+        <h3>Maintenance Entry</h3>
+        <div class="row">
+          <div><label>Employee ID</label><input id="empId" placeholder="Emp ID" /></div>
+          <div><label>Name</label><input id="empName" placeholder="Employee Name" /></div>
+        </div>
+        <div class="row">
+          <div><label>Department</label><input id="department" placeholder="Department" /></div>
+          <div><label>Equipment</label><input id="equipment" placeholder="Equipment" /></div>
+        </div>
+        <div class="row">
+          <div><label>Date</label><input id="reportDate" type="date" /></div>
+          <div><label>Photo Upload</label><input id="photoUpload" type="file" accept="image/*" /></div>
+        </div>
+        <label>Details</label>
+        <textarea id="details" placeholder="Maintenance details"></textarea>
+        <div class="toolbar">
+          <div class="small">Required: Emp ID, Name, Department, Equipment, Date</div>
+          <div class="nowrap">
+            <button class="btn btn-secondary" onclick="clearReportForm()">Clear</button>
+            <button class="btn btn-primary" onclick="saveReport()">Save Report</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="pm" class="card hidden">
+        <h3>Preventive Maintenance Schedule</h3>
+        <div class="row">
+          <div><label>Equipment</label><input id="pmEquipment" placeholder="Equipment" /></div>
+          <div><label>Next Date</label><input id="pmNextDate" type="date" /></div>
+        </div>
+        <div class="toolbar">
+          <div class="small">Required: Equipment and Next Date</div>
+          <div class="nowrap">
+            <button class="btn btn-secondary" onclick="clearPmForm()">Clear</button>
+            <button class="btn btn-primary" onclick="savePm()">Save PM</button>
+          </div>
+        </div>
+        <table><thead><tr><th>Equipment</th><th>Next Date</th><th>Action</th></tr></thead><tbody id="pmTable"></tbody></table>
+      </section>
+
+      <section id="reports" class="card hidden">
+        <div class="toolbar">
+          <div>
+            <h3 style="margin:0 0 8px 0;">Reports</h3>
+            <input id="searchInput" placeholder="Search by report no, emp id, name, department, equipment..." oninput="renderTables()" />
+          </div>
+          <div class="nowrap" style="text-align:right;"><button class="btn btn-primary" onclick="downloadReports()">Download CSV</button></div>
+        </div>
+        <table><thead><tr><th>No</th><th>Emp ID</th><th>Name</th><th>Department</th><th>Equipment</th><th>Date</th><th>Details</th><th>Photo</th><th>Action</th></tr></thead><tbody id="reportTable"></tbody></table>
+      </section>
+
+      <section id="users" class="card hidden">
+        <h3>User Management</h3>
+        <div class="row">
+          <div><label>Username</label><input id="newUser" placeholder="Username" /></div>
+          <div><label>Password</label><input id="newPass" type="password" placeholder="Password" /></div>
+        </div>
+        <div class="row">
+          <div><label>Gmail</label><input id="newEmail" type="email" placeholder="user@gmail.com" /></div>
+          <div><label>Role</label>
+            <select id="newRole">
+              <option value="Worker">Worker</option>
+              <option value="Supervisor">Supervisor</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="small">Admin only access. Gmail added for each user.</div>
+        <button class="btn btn-success" onclick="addUser()">Add User</button>
+        <table><thead><tr><th>Username</th><th>Gmail</th><th>Role</th><th>Action</th></tr></thead><tbody id="userTable"></tbody></table>
+      </section>
+
+      <section id="cloud" class="card hidden">
+        <h3>Cloud Backup / Restore</h3>
+        <div class="status-box"><b>Status:</b> Admin only access.<br><span class="small">Export all data to JSON and restore it anytime.</span></div>
+        <div class="toolbar" style="margin-top:12px;">
+          <div><button class="btn btn-primary" onclick="exportBackup()">Export Full Backup</button></div>
+          <div><input id="backupFile" type="file" accept=".json,application/json" /><button class="btn btn-warning" onclick="importBackup()">Import Backup</button></div>
+        </div>
+      </section>
+
+      <section id="passwords" class="card hidden">
+        <h3>Password Reset with OTP</h3>
+        <div class="otp-note">Demo OTP works immediately. Real Gmail OTP is EmailJS-ready after you add your keys below.</div>
+        <div class="row">
+          <div><label>Select User</label><select id="resetUserSelect"></select></div>
+          <div><label>New Password</label><input id="resetPasswordInput" type="password" placeholder="New password" /></div>
+        </div>
+        <div class="row">
+          <div><label>OTP</label><input id="otpInput" placeholder="Enter OTP" /></div>
+          <div><label>OTP Mode</label>
+            <select id="otpMode">
+              <option value="demo">Demo OTP (works now)</option>
+              <option value="emailjs">EmailJS Gmail OTP</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div><label>EmailJS Public Key</label><input id="emailjsPublicKey" placeholder="Optional" /></div>
+          <div><label>EmailJS Service ID</label><input id="emailjsServiceId" placeholder="Optional" /></div>
+        </div>
+        <div class="row">
+          <div><label>EmailJS Template ID</label><input id="emailjsTemplateId" placeholder="Optional" /></div>
+          <div class="small" style="padding-top:30px;">Admin can reset any user. Non-admin can reset only their own password.</div>
+        </div>
+        <div class="toolbar">
+          <div class="small">In demo mode OTP is shown on screen. In EmailJS mode OTP is sent to Gmail.</div>
+          <div class="nowrap">
+            <button class="btn btn-secondary" onclick="loadPasswordUsers()">Refresh Users</button>
+            <button class="btn btn-primary" onclick="sendOTP()">Send OTP</button>
+            <button class="btn btn-warning" onclick="verifyOTPAndReset()">Verify & Reset</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    let reports = JSON.parse(localStorage.getItem("reports") || "[]");
+    if (!Array.isArray(reports)) reports = [];
+
+    let pmList = JSON.parse(localStorage.getItem("pm") || "[]");
+    if (!Array.isArray(pmList)) pmList = [];
+
+    let users = JSON.parse(localStorage.getItem("users") || '[]');
+    if (!Array.isArray(users)) users = [];
+    if (!users.some(u => u.u === "admin")) {
+      users.push({u:"admin", p:"1234", email:"admin@gmail.com", role:"Admin"});
+      localStorage.setItem("users", JSON.stringify(users));
+    }
+
+    let counter = Number(localStorage.getItem("counter") || "0");
+    if (!Number.isFinite(counter)) counter = 0;
+
+    let otpStore = JSON.parse(localStorage.getItem("otpStore") || "{}");
+
+    function persist() {
+      localStorage.setItem("reports", JSON.stringify(reports));
+      localStorage.setItem("pm", JSON.stringify(pmList));
+      localStorage.setItem("users", JSON.stringify(users));
+      localStorage.setItem("counter", String(counter));
+      localStorage.setItem("otpStore", JSON.stringify(otpStore));
+    }
+
+    function currentSession() {
+      return JSON.parse(localStorage.getItem("session") || "null");
+    }
+
+    function isAdmin() {
+      const s = currentSession();
+      return !!s && s.role === "Admin";
+    }
+
+    function login() {
+      const u = document.getElementById("loginUsername").value.trim();
+      const p = document.getElementById("loginPassword").value.trim();
+      const found = users.find(x => x.u === u && x.p === p);
+      if (found) {
+        localStorage.setItem("session", JSON.stringify({u: found.u, role: found.role, email: found.email || ""}));
+        renderApp();
+      } else {
+        alert("Wrong login");
+      }
+    }
+
+    function renderApp() {
+      const session = currentSession();
+      if (!session) {
+        document.getElementById("loginView").style.display = "block";
+        document.getElementById("appView").classList.add("hidden");
+        return;
+      }
+      document.getElementById("loginView").style.display = "none";
+      document.getElementById("appView").classList.remove("hidden");
+      document.getElementById("userInfo").innerText = "Logged in: " + session.u + " (" + session.role + ")" + (session.email ? " • " + session.email : "");
+      document.getElementById("usersNav").style.display = isAdmin() ? "" : "none";
+      document.getElementById("cloudNav").style.display = isAdmin() ? "" : "none";
+      renderTables();
+      loadPasswordUsers();
+      showPage("dashboard");
+    }
+
+    function logout() {
+      localStorage.removeItem("session");
+      location.reload();
+    }
+
+    function showPage(pageId) {
+      if ((pageId === "users" || pageId === "cloud") && !isAdmin()) {
+        alert("Access denied (Admin only)");
+        return;
+      }
+      ["dashboard","entry","pm","reports","users","cloud","passwords"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("hidden");
+      });
+      const target = document.getElementById(pageId);
+      if (target) {
+        target.classList.remove("hidden");
+        if (pageId === "passwords") loadPasswordUsers();
+      }
+    }
+
+    function clearReportForm() {
+      document.getElementById("empId").value = "";
+      document.getElementById("empName").value = "";
+      document.getElementById("department").value = "";
+      document.getElementById("equipment").value = "";
+      document.getElementById("reportDate").value = "";
+      document.getElementById("details").value = "";
+      document.getElementById("photoUpload").value = "";
+    }
+
+    function clearPmForm() {
+      document.getElementById("pmEquipment").value = "";
+      document.getElementById("pmNextDate").value = "";
+    }
+
+    function saveReport() {
+      const empId = document.getElementById("empId").value.trim();
+      const name = document.getElementById("empName").value.trim();
+      const department = document.getElementById("department").value.trim();
+      const equipment = document.getElementById("equipment").value.trim();
+      const date = document.getElementById("reportDate").value;
+      const details = document.getElementById("details").value.trim();
+      const photoFile = document.getElementById("photoUpload").files[0];
+
+      if (!empId || !name || !department || !equipment || !date) {
+        alert("Please fill all required fields");
+        return;
+      }
+
+      counter += 1;
+      reports.push({
+        no: "TSK-" + String(counter).padStart(4, "0"),
+        empId, name, department, equipment, date, details,
+        photo: photoFile ? photoFile.name : ""
+      });
+
+      persist();
+      clearReportForm();
+      renderTables();
+      showPage("reports");
+      alert("Report saved successfully");
+    }
+
+    function savePm() {
+      const equip = document.getElementById("pmEquipment").value.trim();
+      const date = document.getElementById("pmNextDate").value;
+      if (!equip || !date) {
+        alert("Please fill PM fields");
+        return;
+      }
+      pmList.push({ equip, date });
+      persist();
+      clearPmForm();
+      renderTables();
+      alert("PM saved successfully");
+    }
+
+    function deleteReport(index) {
+      if (!confirm("Delete this report?")) return;
+      reports.splice(index, 1);
+      persist();
+      renderTables();
+    }
+
+    function deletePm(index) {
+      if (!confirm("Delete this PM item?")) return;
+      pmList.splice(index, 1);
+      persist();
+      renderTables();
+    }
+
+    function addUser() {
+      if (!isAdmin()) {
+        alert("Admin only");
+        return;
+      }
+      const u = document.getElementById("newUser").value.trim();
+      const p = document.getElementById("newPass").value.trim();
+      const email = document.getElementById("newEmail").value.trim();
+      const role = document.getElementById("newRole").value;
+
+      if (!u || !p || !email) {
+        alert("Enter username, password and Gmail");
+        return;
+      }
+      if (users.some(x => x.u === u)) {
+        alert("Username already exists");
+        return;
+      }
+
+      users.push({u, p, email, role});
+      persist();
+      document.getElementById("newUser").value = "";
+      document.getElementById("newPass").value = "";
+      document.getElementById("newEmail").value = "";
+      document.getElementById("newRole").value = "Worker";
+      renderTables();
+      loadPasswordUsers();
+      alert("User added successfully");
+    }
+
+    function deleteUser(index) {
+      if (!isAdmin()) {
+        alert("Admin only");
+        return;
+      }
+      if (users[index] && users[index].u === "admin") {
+        alert("Default admin cannot be deleted");
+        return;
+      }
+      if (!confirm("Delete this user?")) return;
+      users.splice(index, 1);
+      persist();
+      renderTables();
+      loadPasswordUsers();
+    }
+
+    function loadPasswordUsers() {
+      const select = document.getElementById("resetUserSelect");
+      if (!select) return;
+      const session = currentSession();
+      const visibleUsers = isAdmin() ? users : users.filter(u => u.u === session.u);
+      select.innerHTML = visibleUsers.map(u => `<option value="${escapeHtml(u.u)}">${escapeHtml(u.u)} ${u.role ? "(" + escapeHtml(u.role) + ")" : ""}</option>`).join("");
+    }
+
+    async function sendOTP() {
+      const username = document.getElementById("resetUserSelect").value;
+      const mode = document.getElementById("otpMode").value;
+      const user = users.find(u => u.u === username);
+      if (!user || !user.email) {
+        alert("User Gmail not found");
+        return;
+      }
+
+      const session = currentSession();
+      if (!isAdmin() && username !== session.u) {
+        alert("You can only reset your own password");
+        return;
+      }
+
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      otpStore[username] = { otp, expires: Date.now() + 10 * 60 * 1000 };
+      persist();
+
+      if (mode === "demo") {
+        alert("Demo OTP for " + user.email + ": " + otp);
+        return;
+      }
+
+      const publicKey = document.getElementById("emailjsPublicKey").value.trim();
+      const serviceId = document.getElementById("emailjsServiceId").value.trim();
+      const templateId = document.getElementById("emailjsTemplateId").value.trim();
+
+      if (!publicKey || !serviceId || !templateId) {
+        alert("Enter EmailJS Public Key, Service ID and Template ID");
+        return;
+      }
+
+      try {
+        emailjs.init({ publicKey });
+        await emailjs.send(serviceId, templateId, {
+          to_email: user.email,
+          to_name: user.u,
+          otp_code: otp,
+          app_name: "VOLTAS Maintenance System"
+        });
+        alert("OTP sent to Gmail");
+      } catch (e) {
+        alert("Email sending failed. Check EmailJS keys/template.");
+      }
+    }
+
+    function verifyOTPAndReset() {
+      const session = currentSession();
+      const username = document.getElementById("resetUserSelect").value;
+      const enteredOtp = document.getElementById("otpInput").value.trim();
+      const newPassword = document.getElementById("resetPasswordInput").value.trim();
+
+      if (!isAdmin() && username !== session.u) {
+        alert("You can only reset your own password");
+        return;
+      }
+      if (!enteredOtp || !newPassword) {
+        alert("Enter OTP and new password");
+        return;
+      }
+
+      const record = otpStore[username];
+      if (!record) {
+        alert("Send OTP first");
+        return;
+      }
+      if (Date.now() > record.expires) {
+        delete otpStore[username];
+        persist();
+        alert("OTP expired");
+        return;
+      }
+      if (record.otp !== enteredOtp) {
+        alert("Invalid OTP");
+        return;
+      }
+
+      const idx = users.findIndex(u => u.u === username);
+      if (idx === -1) {
+        alert("User not found");
+        return;
+      }
+
+      users[idx].p = newPassword;
+      delete otpStore[username];
+      persist();
+
+      if (session.u === username) {
+        localStorage.setItem("session", JSON.stringify({u: users[idx].u, role: users[idx].role, email: users[idx].email || ""}));
+      }
+
+      document.getElementById("otpInput").value = "";
+      document.getElementById("resetPasswordInput").value = "";
+      alert("Password updated successfully");
+    }
+
+    function countBy(items, keyName) {
+      const out = {};
+      items.forEach(item => {
+        const key = (item[keyName] || "Unknown").trim() || "Unknown";
+        out[key] = (out[key] || 0) + 1;
+      });
+      return out;
+    }
+
+    function makeBarChart(targetId, dataMap) {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const entries = Object.entries(dataMap);
+      if (!entries.length) {
+        target.innerHTML = '<div class="small">No data available</div>';
+        return;
+      }
+      const max = Math.max(...entries.map(x => x[1]), 1);
+      target.innerHTML = entries.map(([label, value]) => `
+        <div class="bar-row">
+          <div>${escapeHtml(label)}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${(value/max)*100}%"></div></div>
+          <div>${value}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderTables() {
+      document.getElementById("totalReports").innerText = reports.length;
+      document.getElementById("totalPm").innerText = pmList.length;
+      document.getElementById("totalUsers").innerText = users.length;
+      document.getElementById("latestReportNo").innerText = reports.length ? reports[reports.length - 1].no : "-";
+
+      const key = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
+      const filteredReports = reports.filter(r =>
+        [r.no, r.empId, r.name, r.department, r.equipment, r.date, r.details, r.photo].join(" ").toLowerCase().includes(key)
+      );
+
+      document.getElementById("reportTable").innerHTML = filteredReports.map(r => {
+        const actualIndex = reports.findIndex(item => item.no === r.no);
+        return `
+          <tr>
+            <td>${escapeHtml(r.no)}</td>
+            <td>${escapeHtml(r.empId)}</td>
+            <td>${escapeHtml(r.name)}</td>
+            <td>${escapeHtml(r.department)}</td>
+            <td>${escapeHtml(r.equipment)}</td>
+            <td>${escapeHtml(r.date)}</td>
+            <td>${escapeHtml(r.details)}</td>
+            <td>${escapeHtml(r.photo)}</td>
+            <td><button class="btn btn-danger" onclick="deleteReport(${actualIndex})">Delete</button></td>
+          </tr>
+        `;
+      }).join("");
+
+      document.getElementById("pmTable").innerHTML = pmList.map((p, index) => `
+        <tr>
+          <td>${escapeHtml(p.equip)}</td>
+          <td>${escapeHtml(p.date)}</td>
+          <td><button class="btn btn-danger" onclick="deletePm(${index})">Delete</button></td>
+        </tr>
+      `).join("");
+
+      const userTable = document.getElementById("userTable");
+      if (userTable) {
+        userTable.innerHTML = users.map((u, index) => `
+          <tr>
+            <td>${escapeHtml(u.u)}</td>
+            <td>${escapeHtml(u.email || "")}</td>
+            <td>${escapeHtml(u.role || "Worker")}</td>
+            <td><button class="btn btn-danger" onclick="deleteUser(${index})">Delete</button></td>
+          </tr>
+        `).join("");
+      }
+
+      makeBarChart("deptChart", countBy(reports, "department"));
+      makeBarChart("equipChart", countBy(reports, "equipment"));
+    }
+
+    function downloadReports() {
+      if (!reports.length) {
+        alert("No reports to download");
+        return;
+      }
+      const headers = ["No","Emp ID","Name","Department","Equipment","Date","Details","Photo"];
+      const rows = reports.map(r => [r.no,r.empId,r.name,r.department,r.equipment,r.date,r.details,r.photo]);
+      const csv = [headers, ...rows]
+        .map(row => row.map(value => `"${String(value ?? "").replace(/"/g, '""')}"`).join(","))
+        .join("\\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "voltas_reports.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportBackup() {
+      if (!isAdmin()) {
+        alert("Admin only");
+        return;
+      }
+      const backup = { reports, pmList, users, counter, otpStore, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "voltas_backup.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackup() {
+      if (!isAdmin()) {
+        alert("Admin only");
+        return;
+      }
+      const file = document.getElementById("backupFile").files[0];
+      if (!file) {
+        alert("Choose a backup file");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function() {
+        try {
+          const data = JSON.parse(reader.result);
+          reports = Array.isArray(data.reports) ? data.reports : [];
+          pmList = Array.isArray(data.pmList) ? data.pmList : [];
+          users = Array.isArray(data.users) ? data.users : users;
+          otpStore = data.otpStore && typeof data.otpStore === "object" ? data.otpStore : {};
+          if (!users.some(u => u.u === "admin")) users.push({u:"admin", p:"1234", email:"admin@gmail.com", role:"Admin"});
+          counter = Number(data.counter || reports.length || 0);
+          persist();
+          renderTables();
+          loadPasswordUsers();
+          alert("Backup imported successfully");
+        } catch (e) {
+          alert("Invalid backup file");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    renderApp();
+  </script>
+</body>
+</html>
